@@ -1,11 +1,10 @@
-package handler
+package process
 
 import (
 	"bufio"
 	"bytes"
 	"fmt"
-	. "github.com/obgnail/MarkdownResouceCollecter/global"
-	"github.com/obgnail/MarkdownResouceCollecter/utils"
+	"github.com/obgnail/MarkdownResouceCollecter/strategy"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -15,28 +14,39 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	. "github.com/obgnail/MarkdownResouceCollecter/global"
+	"github.com/obgnail/MarkdownResouceCollecter/utils"
 )
 
+func (h *BaseHandler) Run() error {
+	fmt.Println("---------------- Start ----------------")
+	if err := h.Collect(); err != nil {
+		return nil
+	}
+	h.BaseAdjust()
+	if err := h.ExecuteStrategies(); err != nil {
+		return err
+	}
+	if err := h.Rewrite(); err != nil {
+		return err
+	}
+	fmt.Println("---------------- END ----------------")
+	h.Report()
+	fmt.Printf("\nPLEASE CHECK DIR: %s", DirPath.RootDirPath)
+	return nil
+}
+
+func (h *BaseHandler) AppendStrategy(s *strategy.Strategy) {
+	h.Strategies = append(h.Strategies, s)
+}
+
 func (h *BaseHandler) Collect() error {
-	// Collect MarkdownFiles
-	filePaths, err := utils.WalkDir(DirPath.MarkdownDirPath, Cfg.MarkdownFileSuffix)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Walk MarkdownDirPath %s", err)
+	if err := h.CollectMarkdownFiles(); err != nil {
+		return err
 	}
-
-	markDownFiles := make([]*MarkdownFile, len(filePaths))
-	for idx, fp := range filePaths {
-		markDownFiles[idx] = BuildMarkdown(fp)
-	}
-	h.Files = markDownFiles
-
-	// Collect PictureFiles
-	for _, markdownFile := range h.Files {
-		pics, err := GetPictureInFile(markdownFile.Path)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Get Picture In File %s", err)
-		}
-		markdownFile.Pictures = pics
+	if err := h.CollectPictureFiles(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -45,6 +55,30 @@ func (h *BaseHandler) BaseAdjust() {
 	h.SetPictureBelongFile()
 	h.SetLocalPictureRealName()
 	h.SetLocalPictureAbsPath()
+}
+
+func (h *BaseHandler) ExecuteStrategies() error {
+	for _, s := range h.Strategies {
+		if err := s.Adjust(h); err != nil {
+			return err
+		}
+		if err := s.Extra(h); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *BaseHandler) Rewrite() error {
+	if err := utils.Mkdir(DirPath.NewMarkdownDirPath); err != nil {
+		return err
+	}
+	for _, file := range h.Files {
+		if err := file.RewriteMarkdownFile(); err != nil {
+			return fmt.Errorf("[Error] Rewrite Markdown File: %s", err)
+		}
+	}
+	return nil
 }
 
 func (h *BaseHandler) Report() {
@@ -58,6 +92,31 @@ func (h *BaseHandler) Report() {
 		fmt.Println()
 	}
 	fmt.Println("==================================")
+}
+
+func (h *BaseHandler) CollectMarkdownFiles() error {
+	filePaths, err := utils.WalkDir(DirPath.MarkdownDirPath, Cfg.MarkdownFileSuffix)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Walk MarkdownDirPath %s", err)
+	}
+
+	markDownFiles := make([]*MarkdownFile, len(filePaths))
+	for idx, fp := range filePaths {
+		markDownFiles[idx] = BuildMarkdown(fp)
+	}
+	h.Files = markDownFiles
+	return nil
+}
+
+func (h *BaseHandler) CollectPictureFiles() error {
+	for _, markdownFile := range h.Files {
+		pics, err := GetPictureInFile(markdownFile.Path)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Get Picture In File %s", err)
+		}
+		markdownFile.Pictures = pics
+	}
+	return nil
 }
 
 func (h *BaseHandler) SetPictureBelongFile() {
@@ -87,7 +146,7 @@ func (h *BaseHandler) SetLocalPictureAbsPath() {
 				pic.IsExist = true
 				pic.AbsPath = pic.OldPath
 			} else {
-				oldPath :=  pic.OldPath
+				oldPath := pic.OldPath
 				// url 解码
 				unescapePath, err := url.QueryUnescape(pic.OldPath)
 				if err != nil {
@@ -151,18 +210,6 @@ func (h *BaseHandler) MovePicturesToResourceDir() error {
 				fmt.Println(fmt.Errorf("[Error] Copy: %s, File:%s, Match:%s\n", err, file.Path, pic.OldMatch))
 				continue
 			}
-		}
-	}
-	return nil
-}
-
-func (h *BaseHandler) Rewrite() error {
-	if err := utils.Mkdir(DirPath.NewMarkdownDirPath); err != nil {
-		return err
-	}
-	for _, file := range h.Files {
-		if err := file.RewriteMarkdownFile(); err != nil {
-			return fmt.Errorf("[Error] Rewrite Markdown File: %s", err)
 		}
 	}
 	return nil

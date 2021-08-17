@@ -1,12 +1,9 @@
-package handler
+package process
+
+import "github.com/obgnail/MarkdownResouceCollecter/strategy"
 
 const (
 	PictureGrammar = `!\[(.+?)\]\((.+?)\)`
-
-	CollectLocalPicture         = "CollectLocalPicture"
-	CollectNetWorkPicture       = "CollectNetWorkPicture"
-	UploadLocalPictureToNetWork = "UploadLocalPictureToNetWork"
-	ExportMarkdown              = "ExportMarkdown"
 )
 
 type Picture struct {
@@ -31,32 +28,24 @@ type MarkdownFile struct {
 	Pictures []*Picture
 }
 
-type BaseHandler struct {
-	Files    []*MarkdownFile
-	TrashBin []*MarkdownFile
-}
-
 type Handler interface {
+	// AppendStrategy 添加资源处理策略
+	AppendStrategy(s *strategy.Strategy)
+	// Collect 收集资源信息
 	Collect() error
+	// BaseAdjust 基础调整
 	BaseAdjust()
-	Adjust()
-	Extra() error
+	// ExecuteStrategies 执行策略
+	ExecuteStrategies() error
+	// Rewrite 重写资源信息到md文件中
 	Rewrite() error
+	// Report 输出执行报告
 	Report()
 }
 
-type CollectLocalPictureHandler struct {
-	*BaseHandler
-}
+type BaseHandler struct {
+	Files    []*MarkdownFile
+	TrashBin []*MarkdownFile
 
-type CollectNetWorkPictureHandler struct {
-	*BaseHandler
-}
-
-type UploadLocalPictureToNetWorkHandler struct {
-	*BaseHandler
-}
-
-type ExportMarkdownHandler struct {
-	*BaseHandler
+	Strategies []strategy.Strategy
 }
