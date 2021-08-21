@@ -2,8 +2,9 @@ package utils
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
-	. "github.com/obgnail/MarkdownResouceCollecter/global"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -12,31 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 )
-
-func CheckExecuteDirExist() error {
-	exist1, err1 := PathExists(DirPath.ToolDirPath)
-	exist2, err2 := PathExists(DirPath.MarkdownDirPath)
-	exist3, err3 := PathExists(DirPath.ResourceDirPath)
-	if err1 != nil {
-		return err1
-	}
-	if err2 != nil {
-		return err2
-	}
-	if err3 != nil {
-		return err2
-	}
-	if !exist1 {
-		return fmt.Errorf("[ERROR] No Dir %s", DirPath.ToolDirPath)
-	}
-	if !exist2 {
-		return fmt.Errorf("[ERROR] No Dir %s", DirPath.MarkdownDirPath)
-	}
-	if !exist3 {
-		return fmt.Errorf("[ERROR] No Dir %s", DirPath.ResourceDirPath)
-	}
-	return nil
-}
 
 func WalkDir(dirPth, suffix string) (files []string, err error) {
 	files = make([]string, 0, 30)
@@ -61,7 +37,7 @@ func ListDir(dirPth string, suffix string) (files []string, err error) {
 
 	dir, err := ioutil.ReadDir(dirPth)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Read Dir %s", err)
+		return nil, fmt.Errorf("[ERROR] Read OriginDir %s", err)
 	}
 
 	PthSep := string(os.PathSeparator)
@@ -168,13 +144,9 @@ func Request(url string) ([]byte, error) {
 	return body, nil
 }
 
-func Exit() {
-	var data string
-	for {
-		fmt.Println("\npress exit to exit")
-		fmt.Scanf("%s", &data)
-		if data == "exit" {
-			break
-		}
-	}
+func MD5(str string) string {
+	h := md5.New()
+	h.Write([]byte(str))
+	return hex.EncodeToString(h.Sum(nil))
 }
+

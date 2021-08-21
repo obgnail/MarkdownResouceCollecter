@@ -1,32 +1,28 @@
-#
-#  为了不让我自己xjb放文件, 强制目录结构:
+# 推荐目录结构:
 #  root
 #  ├── assets (存放资源)
 #  ├── md     (存放md文件)
 #  └── tool   (存放本工具)
-#
 
 # 上述目录结构的资源目录名
-resourceDirName: assets
+resourceDirPath: D:\tmp\root\assets
 # 上述目录结构的markdown文件目录名
-markdownDirName: md2
-# 上述目录结构的工具目录名(本代码编译后的二进制文件就放在这里)
-toolDirName: tool
+markdownDirPath: C:\Users\12516\Dropbox\root\md
+# 产生新的md目录名
+newMarkdownDirPath: D:\tmp\root\md2
 
 # 本地md文件的后缀
 markdownFileSuffix: .md
-# 产生新的md目录名
-newMarkdownDirName: md.bak
 
 # 本地图片使用绝对路径
-doesLocalPictureUseAbsPath: false
+localPictureUseAbsPath: false
 
-# 使用的处理器,目前支持的功能:(注意顺序)
-# CollectLocalPicture: 下载网络资源,并将其放到assets目录中
-# CollectNetWorkPicture: 将所有本地资源合并到assets目录中
+# 使用的处理策略,目前支持的功能:(注意顺序)
+# CollectLocalPicture         : 下载网络资源,并将其放到assets目录中
+# CollectNetWorkPicture       : 将所有本地资源合并到assets目录中
 # TODO(暂不支持)
-# UploadLocalPictureToNetWork: 将本地图片上传至网络中
-# ExportMarkdown: 将markdown文件连同所用资源导出
-handlers:
-  - CollectLocalPicture
+# UploadLocalPictureToNetWork : 将本地图片上传至网络中
+# ExportMarkdown              : 将markdown文件连同所用资源导出
+strategies:
   - CollectNetWorkPicture
+  - CollectLocalPicture
