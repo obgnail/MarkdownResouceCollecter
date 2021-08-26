@@ -52,10 +52,10 @@ type BaseHandler struct {
 	*config.Config
 }
 
-// Strategy 使用不同的策略对资源进行处理
+// Strategy 使用不同的策略对资源进行处理,更多地类似于中间件
 type Strategy interface {
-	// Adjust 每个策略都可以调整md资源
-	Adjust(h *BaseHandler) error
-	// Extra 每个策略都可以执行一些额外的任务
-	Extra(h *BaseHandler) error
+	// BeforeRewrite 在写入收集完资源,写入新的markdown文件前
+	BeforeRewrite(h *BaseHandler) error
+	// AfterRewrite 在写入新的markdown文件之后
+	AfterRewrite(h *BaseHandler) error
 }

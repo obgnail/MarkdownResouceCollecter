@@ -64,21 +64,34 @@ func (h *BaseHandler) AppendStrategy(s Strategy) {
 
 func (h *BaseHandler) Run() error {
 	fmt.Println("---------------- Start ----------------")
+	if err := h.CheckOriginMDExist(); err != nil {
+		return err
+	}
 	if err := h.Collect(); err != nil {
 		return nil
 	}
 	if err := h.BaseAdjust(); err != nil {
 		return err
 	}
-	if err := h.ExecuteStrategies(); err != nil {
+	if err := h.BeforeRewrite(); err != nil {
 		return err
 	}
 	if err := h.Rewrite(); err != nil {
 		return err
 	}
+	if err := h.AfterRewrite(); err != nil {
+		return err
+	}
 	fmt.Println("---------------- END ----------------")
 	h.Report()
-	fmt.Printf("\nPLEASE CHECK DIR: %s", h.NewMarkdownDirPath)
+	fmt.Printf("\nPLEASE CHECK DIR: %s\n", h.NewMarkdownRootPath)
+	return nil
+}
+
+func (h *BaseHandler) CheckOriginMDExist() error {
+	if exist, _ := utils.PathExists(h.OriginMarkdownRootPath); !exist {
+		return fmt.Errorf("[WARN]: Cant Find OriginMarkdownRootPath :%s", h.OriginMarkdownRootPath)
+	}
 	return nil
 }
 
@@ -113,12 +126,18 @@ func (h *BaseHandler) BaseAdjust() error {
 	return nil
 }
 
-func (h *BaseHandler) ExecuteStrategies() error {
+func (h *BaseHandler) AfterRewrite() error {
 	for _, s := range h.strategies {
-		if err := s.Adjust(h); err != nil {
+		if err := s.AfterRewrite(h); err != nil {
 			return err
 		}
-		if err := s.Extra(h); err != nil {
+	}
+	return nil
+}
+
+func (h *BaseHandler) BeforeRewrite() error {
+	for _, s := range h.strategies {
+		if err := s.BeforeRewrite(h); err != nil {
 			return err
 		}
 	}
@@ -126,8 +145,11 @@ func (h *BaseHandler) ExecuteStrategies() error {
 }
 
 func (h *BaseHandler) Rewrite() error {
-	if err := utils.Mkdir(h.NewMarkdownDirPath); err != nil {
-		return err
+	// 有可能OriginMarkdownRootPath只是一个文件,此时就不能mkdir
+	if ret := utils.IsDir(h.OriginMarkdownRootPath); ret {
+		if err := utils.Mkdir(h.NewMarkdownRootPath); err != nil {
+			return err
+		}
 	}
 	for _, file := range h.Files {
 		if err := file.RewriteMarkdownFile(); err != nil {
@@ -151,14 +173,14 @@ func (h *BaseHandler) Report() {
 }
 
 func (h *BaseHandler) CollectMarkdownFiles() error {
-	filePaths, err := utils.WalkDir(h.MarkdownDirPath, h.MarkdownFileSuffix)
+	filePaths, err := utils.Walk(h.OriginMarkdownRootPath, h.MarkdownFileSuffix)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Walk MarkdownDirPath %s", err)
+		return fmt.Errorf("[ERROR] Walk OriginMarkdownRootPath %s", err)
 	}
 
 	markDownFiles := make([]*MarkdownFile, len(filePaths))
 	for idx, fp := range filePaths {
-		markDownFiles[idx] = BuildMarkdown(fp, h.MarkdownDirPath, h.NewMarkdownDirPath)
+		markDownFiles[idx] = BuildMarkdown(fp, h.OriginMarkdownRootPath, h.NewMarkdownRootPath)
 	}
 	h.Files = markDownFiles
 	return nil
@@ -298,7 +320,7 @@ func (p *Picture) SetAbsPath() error {
 }
 
 func MovePicturesToResourceDir(h *BaseHandler) error {
-	if err := utils.Mkdir(h.ResourceDirPath); err != nil {
+	if err := utils.Mkdir(h.NewResourceRootDirPath); err != nil {
 		return err
 	}
 	for _, file := range h.Files {

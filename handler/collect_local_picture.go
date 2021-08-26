@@ -8,13 +8,17 @@ import (
 // CollectLocalPictureStrategy 收集本地图片,将其放到其中一个统一的地方
 type CollectLocalPictureStrategy struct{}
 
-func (s *CollectLocalPictureStrategy) Adjust(h *BaseHandler) error {
-	return s.SetLocalPictureNewMatchAndNewPath(h)
+func (s *CollectLocalPictureStrategy) BeforeRewrite(h *BaseHandler) error {
+	if err := s.SetLocalPictureNewMatchAndNewPath(h); err != nil {
+		return err
+	}
+	if err := MovePicturesToResourceDir(h); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *CollectLocalPictureStrategy) Extra(h *BaseHandler) error {
-	return MovePicturesToResourceDir(h)
-}
+func (s *CollectLocalPictureStrategy) AfterRewrite(h *BaseHandler) error { return nil }
 
 func (s *CollectLocalPictureStrategy) SetLocalPictureNewMatchAndNewPath(h *BaseHandler) error {
 	for _, file := range h.Files {
@@ -26,12 +30,12 @@ func (s *CollectLocalPictureStrategy) SetLocalPictureNewMatchAndNewPath(h *BaseH
 				continue
 			}
 
-			pic.NewPath = filepath.Join(h.ResourceDirPath, pic.RealName)
+			pic.NewPath = filepath.Join(h.NewResourceRootDirPath, pic.RealName)
 
 			if h.LocalPictureUseAbsPath {
 				pic.NewMatch = fmt.Sprintf("![%s](%s)", pic.ShowName, pic.NewPath)
 			} else {
-				relPath, err := filepath.Rel(file.NewDir, h.ResourceDirPath)
+				relPath, err := filepath.Rel(file.NewDir, h.NewResourceRootDirPath)
 				if err != nil {
 					fmt.Println(fmt.Errorf("[ERROR] Get RelPath: %s", err))
 					pic.NewPath = pic.OriginPath

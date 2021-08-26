@@ -2,20 +2,21 @@
 #  root
 #  ├── assets (存放资源)
 #  ├── md     (存放md文件)
+#  ├── md.bak (存放生成的备份md文件)
 #  └── tool   (存放本工具)
 
-# 上述目录结构的资源目录名
-resourceDirPath: D:\tmp\root\assets
-# 上述目录结构的markdown文件目录名
-markdownDirPath: C:\Users\12516\Dropbox\root\md
-# 产生新的md目录名
-newMarkdownDirPath: D:\tmp\root\md2
+# 原markdown文件目录/文件名
+originMarkdownRootPath: /Users/heyingliang/myTemp/root/md2/Learning/Celery/网站__Celery中文文档/网站__Celery中文文档.md
+
+# 迁移后的资源目录名
+newResourceRootDirPath: /Users/heyingliang/myTemp/blog/source/images
+# 迁移后的md目录/文件名
+newMarkdownRootPath: /Users/heyingliang/myTemp/blog/source/_posts/Celery/网站__Celery中文文档/网站__Celery中文文档.md
 
 # 本地md文件的后缀
 markdownFileSuffix: .md
-
 # 本地图片使用绝对路径
-localPictureUseAbsPath: false
+localPictureUseAbsPath: true
 
 # 使用的处理策略,目前支持的功能:(注意顺序)
 # CollectLocalPicture         : 下载网络资源,并将其放到assets目录中

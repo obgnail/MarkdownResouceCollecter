@@ -19,8 +19,15 @@ const (
 // CollectNetWorkPictureStrategy 收集本地图片,将其放到其中一个统一的地方
 type CollectNetWorkPictureStrategy struct{}
 
-func (s *CollectNetWorkPictureStrategy) Adjust(h *BaseHandler) error {
-	// 避免网络图片和本地图片重名,所以网络图片一律添加md5前缀
+func (s *CollectNetWorkPictureStrategy) BeforeRewrite(h *BaseHandler) error {
+	s.ResolveDuplicateNameConflict(h)
+	return PullNetWorkPictures(h)
+}
+
+func (s *CollectNetWorkPictureStrategy) AfterRewrite(h *BaseHandler) error { return nil }
+
+// 避免网络图片和本地图片重名,所以网络图片一律添加md5前缀
+func (s *CollectNetWorkPictureStrategy) ResolveDuplicateNameConflict(h *BaseHandler) {
 	for _, file := range h.Files {
 		for _, pic := range file.Pictures {
 			if !pic.FromNet || !pic.IsExist {
@@ -29,11 +36,6 @@ func (s *CollectNetWorkPictureStrategy) Adjust(h *BaseHandler) error {
 			pic.ResetRealNameByMD5()
 		}
 	}
-	return nil
-}
-
-func (s *CollectNetWorkPictureStrategy) Extra(h *BaseHandler) error {
-	return PullNetWorkPictures(h)
 }
 
 func PullNetWorkPictures(h *BaseHandler) error {
@@ -51,7 +53,7 @@ func PullNetWorkPictures(h *BaseHandler) error {
 				if err := s.Acquire(context.Background(), weight); err != nil {
 					fmt.Println(err)
 				}
-				if err := pic.StoreNetWorkPicture(h.ResourceDirPath, h.LocalPictureUseAbsPath); err != nil {
+				if err := pic.StoreNetWorkPicture(h.NewResourceRootDirPath, h.LocalPictureUseAbsPath); err != nil {
 					fmt.Println(err)
 				}
 				s.Release(weight)

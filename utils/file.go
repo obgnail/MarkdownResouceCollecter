@@ -1,24 +1,24 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"mime/multipart"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func WalkDir(dirPth, suffix string) (files []string, err error) {
+func Walk(path, suffix string) (files []string, err error) {
+	if ret := IsFile(path); ret {
+		return []string{path}, nil
+	}
+
 	files = make([]string, 0, 30)
 	suffix = strings.ToUpper(suffix)
-
-	err = filepath.Walk(dirPth, func(filename string, fi os.FileInfo, err error) error {
+	err = filepath.Walk(path, func(filename string, fi os.FileInfo, err error) error {
 		if fi.IsDir() {
 			return nil
 		}
@@ -53,6 +53,17 @@ func ListDir(dirPth string, suffix string) (files []string, err error) {
 	}
 
 	return files, nil
+}
+
+// 调用此函数前需保证路径存在
+func IsDir(path string) bool {
+	s, _ := os.Stat(path)
+	return s.IsDir()
+}
+
+// 调用此函数前需保证路径存在
+func IsFile(path string) bool {
+	return !IsDir(path)
 }
 
 func PathExists(dirPth string) (bool, error) {
@@ -110,43 +121,8 @@ func CopyFile(originalFilePath, copiedFilePath string) error {
 	return nil
 }
 
-func Request(url string) ([]byte, error) {
-	method := "GET"
-
-	payload := &bytes.Buffer{}
-	writer := multipart.NewWriter(payload)
-	err := writer.Close()
-	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Close Writer %s", err)
-	}
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
-
-	if err != nil {
-		return nil, fmt.Errorf("[ERROR] New Request %s", err)
-	}
-	req.Header.Add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36")
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Request %s", err)
-	}
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("[ERROR] Request Status: %s", res.Status)
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil || len(body) == 0 {
-		return nil, fmt.Errorf("[ERROR] Read Response Body %s", err)
-	}
-	return body, nil
-}
-
 func MD5(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
 }
-

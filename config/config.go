@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	MarkdownDirPath        string   `yaml:"markdownDirPath"`
-	ResourceDirPath        string   `yaml:"resourceDirPath"`
-	NewMarkdownDirPath     string   `yaml:"newMarkdownDirPath"`
+	OriginMarkdownRootPath string   `yaml:"originMarkdownRootPath"`
+	NewResourceRootDirPath string   `yaml:"newResourceRootDirPath"`
+	NewMarkdownRootPath    string   `yaml:"newMarkdownRootPath"`
 	Strategies             []string `yaml:"strategies"`
 	MarkdownFileSuffix     string   `yaml:"markdownFileSuffix"`
 	LocalPictureUseAbsPath bool     `yaml:"localPictureUseAbsPath"`
@@ -28,4 +28,18 @@ func InitConfigFromYaml(path string) *Config {
 		return nil
 	}
 	return c
+}
+
+func InitConfig(
+	OriginMarkdownRootPath, NewResourceRootDirPath, NewMarkdownRootPath string,
+	Strategies []string, MarkdownFileSuffix string, LocalPictureUseAbsPath bool,
+) *Config {
+	return &Config{
+		OriginMarkdownRootPath: OriginMarkdownRootPath,
+		NewResourceRootDirPath: NewResourceRootDirPath,
+		NewMarkdownRootPath:    NewMarkdownRootPath,
+		Strategies:             Strategies,
+		MarkdownFileSuffix:     MarkdownFileSuffix,
+		LocalPictureUseAbsPath: LocalPictureUseAbsPath,
+	}
 }
