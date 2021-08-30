@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	limit  = 5
+	limit  = 10
 	weight = 1
 )
 
@@ -74,6 +74,7 @@ func (p *Picture) StoreNetWorkPicture(resourceDirPath string, isLocalPictureUseA
 	// 当文件不存在本地时,发起网络请求
 	if !p.IsExistInLocal(resourceDirPath) {
 		p.IsExist = false
+		fmt.Println("Pulling Picture:", p.AbsPath)
 		body, err := utils.Request(p.AbsPath)
 		if err != nil || body == nil {
 			return fmt.Errorf("[WARN] Cant Pull NetWork File %s, Match:%s", err, p.OriginMatch)

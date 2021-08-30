@@ -6,12 +6,12 @@
 #  └── tool   (存放本工具)
 
 # 原markdown文件目录/文件名
-originMarkdownRootPath: /Users/heyingliang/myTemp/root/md2/Learning/Celery/网站__Celery中文文档/网站__Celery中文文档.md
+originMarkdownRootPath: /Users/heyingliang/Dropbox/root/md
 
 # 迁移后的资源目录名
-newResourceRootDirPath: /Users/heyingliang/myTemp/blog/source/images
+newResourceRootDirPath: /Users/heyingliang/myTemp/root/assets
 # 迁移后的md目录/文件名
-newMarkdownRootPath: /Users/heyingliang/myTemp/blog/source/_posts/Celery/网站__Celery中文文档/网站__Celery中文文档.md
+newMarkdownRootPath: /Users/heyingliang/myTemp/root/md2
 
 # 本地md文件的后缀
 markdownFileSuffix: .md
